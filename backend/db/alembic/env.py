@@ -1,10 +1,54 @@
 from logging.config import fileConfig
 
+from sqlalchemy.orm import declarative_base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import Column, Integer, String
 
 from alembic import context
 
+Base = declarative_base()
+
+_type_lookup = {"integer": Integer, "string": String}
+
+entries = [{
+        "clsname": "MyClass",
+        "tablename": "my_table",
+        "columns": [
+            {"name": "col1", "type": "integer", "is_pk": True},
+            {"name": "col2", "type": "string"},
+            {"name": "col3", "type": "integer"},
+            {"name": "col4", "type": "integer"}
+        ],
+    },
+           {
+        "clsname": "MoreClass",
+        "tablename": "more_table",
+        "columns": [
+            {"name": "col1", "type": "integer", "is_pk": True},
+            {"name": "col2", "type": "string"},
+            {"name": "col3", "type": "integer"},
+            {"name": "col4", "type": "integer"}
+        ],
+    }]
+
+def mapping_to_metadata(entry):
+
+    clsdict = {"__tablename__": entry["tablename"]}
+
+    clsdict.update(
+        {
+            rec["name"]: Column(
+                _type_lookup[rec["type"]], primary_key=rec.get("is_pk", False)
+            )
+            for rec in entry["columns"]
+        }
+    )
+    return type(entry["clsname"], (Base,), clsdict)
+
+for entry in entries:
+    mapping_to_metadata(entry)
+    
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -18,7 +62,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
