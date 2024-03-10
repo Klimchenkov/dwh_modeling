@@ -1,3 +1,6 @@
+import pickle
+import redis
+
 from logging.config import fileConfig
 
 from sqlalchemy.orm import declarative_base
@@ -11,26 +14,11 @@ Base = declarative_base()
 
 _type_lookup = {"integer": Integer, "string": String}
 
-entries = [{
-        "clsname": "MyClass",
-        "tablename": "my_table",
-        "columns": [
-            {"name": "col1", "type": "integer", "is_pk": True},
-            {"name": "col2", "type": "string"},
-            {"name": "col3", "type": "integer"},
-            {"name": "col4", "type": "integer"}
-        ],
-    },
-           {
-        "clsname": "MoreClass",
-        "tablename": "more_table",
-        "columns": [
-            {"name": "col1", "type": "integer", "is_pk": True},
-            {"name": "col2", "type": "string"},
-            {"name": "col3", "type": "integer"},
-            {"name": "col4", "type": "integer"}
-        ],
-    }]
+redis_conn = redis.StrictRedis('redis')
+
+entries = redis_conn.get('migration_entries')
+entries = pickle.loads(entries)
+
 
 def mapping_to_metadata(entry):
 
